@@ -1,1 +1,83 @@
-ejercicio 5 pendiente
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <cctype>
+#include<locale.h>
+
+using namespace std;
+
+// Secuencias de escape que representan los caracteres acentuados en UTF-8.
+// Esto es la forma más compatible de definir estos caracteres en C++.
+const string ACENTOS_UTF8 = 
+    "\xC3\xA1\xC3\xA9\xC3\xAD\xC3\xB3\xC3\xBA" // áéíóú
+    "\xC3\x81\xC3\x89\xC3\x8D\xC3\x93\xC3\x9A" // ÁÉÍÓÚ
+    "\xC3\xB1\xC3\x91";                        // ñÑ
+
+const string BASES_ASCII = 
+    "aeiou"
+    "AEIOU"
+    "nN";
+
+// -----------------------------------------------------------------
+
+string limpiar_texto(const string& texto) {
+    string texto_limpio = "";
+    
+    for (size_t i = 0; i < texto.length(); ++i) {
+        char c = texto[i];
+        
+        // 1. Manejo de secuencias de acentos UTF-8 (2 bytes)
+        if (i + 1 < texto.length() && c == '\xC3') {
+            string seq = texto.substr(i, 2);
+            size_t pos = ACENTOS_UTF8.find(seq);
+
+            if (pos != string::npos) {
+                // Si encontramos un acento (2 bytes), lo reemplazamos por el carácter base (1 byte)
+                c = BASES_ASCII[pos / 2];
+                i++; // Saltamos el segundo byte de la secuencia UTF-8
+            }
+        }
+        
+        // 2. Limpieza final: Eliminar no-alfanuméricos y convertir a minúsculas
+        if (isalnum(static_cast<unsigned char>(c))) {
+            texto_limpio += tolower(static_cast<unsigned char>(c));
+        }
+    }
+    
+    return texto_limpio;
+}
+
+/**
+ * Retorna verdadero si el texto es un palíndromo.
+ */
+bool es_palindromo(const string& texto) {
+    string texto_limpio = limpiar_texto(texto);
+
+    // Comparación por doble puntero
+    int izquierda = 0;
+    int derecha = texto_limpio.length() - 1;
+
+    while (izquierda < derecha) {
+        if (texto_limpio[izquierda] != texto_limpio[derecha]) {
+            return false;
+        }
+        izquierda++;
+        derecha--;
+    }
+
+    return true;
+}
+
+int main() {
+	setlocale(LC_ALL, "Spanish");
+    // Es CRÍTICO que estas frases de prueba estén codificadas como UTF-8
+    string frase_1 = "Ana lleva al oso la avellana"; 
+    string frase_2 = "Dábale arroz a la zorra el abad";
+    string frase_3 = "¿Será palíndromo ó no lo será?"; 
+    
+    cout << "Frase 1 ('" << frase_1 << "'): " << (es_palindromo(frase_1) ? "VERDADERO" : "FALSO") << endl;
+    cout << "Frase 2 ('" << frase_2 << "'): " << (es_palindromo(frase_2) ? "VERDADERO" : "FALSO") << endl;
+    cout << "Frase 3 ('" << frase_3 << "'): " << (es_palindromo(frase_3) ? "VERDADERO" : "FALSO") << endl;
+
+    return 0;
+}
